@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(description='Gets Overwatch Leage Schedule from
 parser.add_argument('-s', '--stage', action="store", dest="stage", default=1, help="stage number", type=int)
 parser.add_argument('-w', '--week', action="store", dest="week_num", default=1, help="week number", type=int)
 parser.add_argument('-t', '--today', action="store_true", dest="today", help="matches today,")
+parser.add_argument('-g', '--google', action="store_true", dest="google", help="outputs for google sheets")
 args = parser.parse_args()
 
 pretty_stage = args.stage
@@ -75,12 +76,37 @@ def build_schedule():
             schedule[date].append(team1 + " vs. " + team2)
     return schedule
 
+def build_google():
+    schedule = {}
+    for game in games:
+        date = get_match_date(args.week_num, game)
+        schedule[date] = []
+    for game in games:
+        date = get_match_date(args.week_num, game)
+        match_state = data["data"]["stages"][args.stage]["weeks"][args.week_num]["matches"][game]["state"]
+        team1 = data["data"]["stages"][args.stage]["weeks"][args.week_num]["matches"][game]["competitors"][0]["name"]
+        team2 = data["data"]["stages"][args.stage]["weeks"][args.week_num]["matches"][game]["competitors"][1]["name"]
+
+        team1 = team1.split(" ")
+        team2 = team2.split(" ")
+        schedule[date].append(team1[-1] + " vs. " + team2[-1])
+    return schedule
+
 # display data
+if args.google:
+    print("\nOverwatch League: Stage %s Week %s\n" % (pretty_stage, pretty_week))
+    schedule = build_google()
+    day = 1
+    for key, value in schedule.items():
+        print("Week %s Day %d" % (pretty_week, day))
+        print(*value, sep='\n')
+        day += 1
+    sys.exit(0)
+
 print("\nOverwatch League: Stage %s Week %s\n" % (pretty_stage, pretty_week))
 schedule = build_schedule()
 for key, value in schedule.items():
     print(key)
     print(*value, sep='\n')
     print()
-
 sys.exit(0)
